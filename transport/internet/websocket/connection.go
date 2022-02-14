@@ -6,14 +6,13 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+
 	"github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/common/errors"
 	"github.com/xtls/xray-core/common/serial"
 )
 
-var (
-	_ buf.Writer = (*connection)(nil)
-)
+var _ buf.Writer = (*connection)(nil)
 
 // connection is a wrapper for net.Conn over WebSocket connection.
 type connection struct {
@@ -22,10 +21,11 @@ type connection struct {
 	remoteAddr net.Addr
 }
 
-func newConnection(conn *websocket.Conn, remoteAddr net.Addr) *connection {
+func newConnection(conn *websocket.Conn, remoteAddr net.Addr, extraReader io.Reader) *connection {
 	return &connection{
 		conn:       conn,
 		remoteAddr: remoteAddr,
+		reader:     extraReader,
 	}
 }
 

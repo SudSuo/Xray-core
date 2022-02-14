@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/lucas-clemente/quic-go"
+
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/net"
 	"github.com/xtls/xray-core/common/protocol/tls/cert"
@@ -96,20 +97,18 @@ func Listen(ctx context.Context, address net.Address, port net.Port, streamSetti
 		IP:   address.IP(),
 		Port: int(port),
 	}, streamSettings.SocketSettings)
-
 	if err != nil {
 		return nil, err
 	}
 
 	quicConfig := &quic.Config{
 		ConnectionIDLength:    12,
-		HandshakeTimeout:      time.Second * 8,
-		MaxIdleTimeout:        time.Second * 45,
+		KeepAlive:             false,
 		MaxIncomingStreams:    32,
 		MaxIncomingUniStreams: -1,
 	}
 
-	conn, err := wrapSysConn(rawConn, config)
+	conn, err := wrapSysConn(rawConn.(*net.UDPConn), config)
 	if err != nil {
 		conn.Close()
 		return nil, err

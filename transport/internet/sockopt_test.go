@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/testing/servers/tcp"
@@ -17,14 +18,14 @@ func TestTCPFastOpen(t *testing.T) {
 			return b
 		},
 	}
-	dest, err := tcpServer.StartContext(context.Background(), &SocketConfig{Tfo: SocketConfig_Enable})
+	dest, err := tcpServer.StartContext(context.Background(), &SocketConfig{Tfo: 256})
 	common.Must(err)
 	defer tcpServer.Close()
 
 	ctx := context.Background()
 	dialer := DefaultSystemDialer{}
 	conn, err := dialer.Dial(ctx, nil, dest, &SocketConfig{
-		Tfo: SocketConfig_Enable,
+		Tfo: 1,
 	})
 	common.Must(err)
 	defer conn.Close()
