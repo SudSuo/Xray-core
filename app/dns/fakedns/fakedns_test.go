@@ -2,14 +2,15 @@ package fakedns
 
 import (
 	gonet "net"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/net"
 	"github.com/xtls/xray-core/common/uuid"
 	"github.com/xtls/xray-core/features/dns"
+	"golang.org/x/sync/errgroup"
 )
 
 var ipPrefix = "198.1"
@@ -64,6 +65,31 @@ func TestFakeDnsHolderCreateMappingManySingleDomain(t *testing.T) {
 	addr := fkdns.GetFakeIPForDomain("fakednstest.example.com")
 	addr2 := fkdns.GetFakeIPForDomain("fakednstest.example.com")
 	assert.Equal(t, addr[0].IP().String(), addr2[0].IP().String())
+}
+
+func TestGetFakeIPForDomainConcurrently(t *testing.T) {
+	fkdns, err := NewFakeDNSHolder()
+	common.Must(err)
+
+	total := 200
+	addr := make([][]net.Address, total)
+	var errg errgroup.Group
+	for i := 0; i < total; i++ {
+		errg.Go(testGetFakeIP(i, addr, fkdns))
+	}
+	errg.Wait()
+	for i := 0; i < total; i++ {
+		for j := i + 1; j < total; j++ {
+			assert.NotEqual(t, addr[i][0].IP().String(), addr[j][0].IP().String())
+		}
+	}
+}
+
+func testGetFakeIP(index int, addr [][]net.Address, fkdns *Holder) func() error {
+	return func() error {
+		addr[index] = fkdns.GetFakeIPForDomain("fakednstest" + strconv.Itoa(index) + ".example.com")
+		return nil
+	}
 }
 
 func TestFakeDnsHolderCreateMappingAndRollOver(t *testing.T) {
